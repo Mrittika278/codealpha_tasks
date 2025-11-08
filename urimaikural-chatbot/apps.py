@@ -1,14 +1,12 @@
 import streamlit as st
 import os
-import pandas as pd
 from llama_index.core import VectorStoreIndex, SimpleDirectoryReader, Settings
 from llama_index.llms.google_genai import GoogleGenAI
 from llama_index.embeddings.google_genai import GoogleGenAIEmbedding
-from llama_index.core.ingestion import IngestionPipeline
 from llama_index.core.node_parser import SentenceSplitter
 
 # 1. --- CONFIGURATION AND SETUP ---
-st.title("⚖️ Urimaikural: Your Basic Rights Educator")
+st.title("⚖️ Urimalkural: Your Basic Rights Educator")
 
 # Define the data path and the specific list of files to load
 DATA_DIR = "data"
@@ -34,11 +32,9 @@ Your personality:
 - If you don't know, guide them to approach legal aid services
 - Focus on basic rights under IPC, CrPC, and the Constitution of India
 - Avoid giving direct legal advice; instead, educate about rights and procedures.
--if asked about topics outside Indian law, politely inform the user that your expertise is limited to Indian legal rights and laws.
-- Always prioritize user safety and confidentiality.
--Always refer to the accurate ipc section number related to the context they ask and when you respond them with examples from real life scenarios where applicable.
+- Always refer to the accurate ipc section number related to the context they ask and when you respond them with examples from real life scenarios where applicable.
 - Maintain a respectful and non-judgmental attitude at all times.
--Never say i dont know, instead say "Based on my knowledge of Indian legal rights, here's what I can share..."
+- Never say "I don't know", instead say "Based on my knowledge of Indian legal rights, here's what I can share..."
 - Ensure your responses align with the latest legal standards and practices in India.
 - Be minimalist in your responses, keeping them concise and to the point of maximum 150 words.
 """
@@ -52,9 +48,10 @@ def get_index():
         return None
     
     # 2b. API KEY CHECK AND ASSIGNMENT (MUST BE INSIDE THE FUNCTION)
-    # Checks for key in environment, which includes Streamlit secrets.
+    # Checks for key in environment first, then Streamlit secrets.
     GEMINI_API_KEY = os.getenv("GEMINI_API_KEY") 
     
+    # Check st.secrets if not found in environment variables (for local development)
     if not GEMINI_API_KEY and "GEMINI_API_KEY" in st.secrets:
         GEMINI_API_KEY = st.secrets["GEMINI_API_KEY"]
 
@@ -82,21 +79,16 @@ def get_index():
     # 2e. CREATE THE VECTOR INDEX
     index = VectorStoreIndex.from_documents(documents)
     
-    return index # Last line of the function, aligned with 2d.
+    return index # Must be indented one level inside the function.
 
-# 3. --- CHAT ENGINE SETUP ---
 # 3. --- CHAT ENGINE SETUP ---
 if "chat_engine" not in st.session_state:
     index = get_index() # Calls the function to get the index object
     
     if index:
-        # NOTE: We DO NOT define 'retriever = index.as_retriever()' here anymore.
-        # This line caused the conflict. We rely on the high-level method.
-
-        # Create the ChatEngine using the most stable arguments that don't conflict.
+        # Create the ChatEngine using the ContextChatEngine's stable arguments.
         st.session_state.chat_engine = index.as_chat_engine(
             chat_mode="context", 
-            # REMOVED: retriever=retriever, <--- This was the conflicting argument
             system_prompt=SYSTEM_PROMPT
         )
 
